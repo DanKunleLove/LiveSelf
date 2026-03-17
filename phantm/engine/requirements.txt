@@ -18,8 +18,10 @@ faster-whisper==1.1.0
 # NOTE: MuseTalk is installed via git clone, not pip
 # See scripts/setup_engine.sh
 
-# Face Swap — Deep-Live-Cam
-# NOTE: Deep-Live-Cam is installed via git clone, not pip
+# Face Swap — uses InsightFace directly (same lib Deep-Live-Cam wraps)
+insightface==0.7.3
+onnxruntime-gpu==1.17.1
+# NOTE: Also requires inswapper_128.onnx in engine/models/
 # See scripts/setup_engine.sh
 
 # Knowledge Base

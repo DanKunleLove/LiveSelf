@@ -26,29 +26,40 @@ Microphone -> faster-whisper (ASR) -> ChromaDB (RAG) -> Ollama/Claude (LLM)
 - pyvirtualcam (virtual camera output)
 - asyncio queues for pipeline coordination
 
-## Current Task: PHASE 1A -- Face Swap on Zoom
+## COMPLETED: Phase 1A -- Face Swap
+
+faceswap.py and virtual_cam.py are built. Phase 0 Colab test produced output.mp4 (4MB, working face swap). Models verified working:
+- inswapper_128_fp16.onnx from https://huggingface.co/hacksider/deep-live-cam/resolve/main/inswapper_128_fp16.onnx
+- GFPGANv1.4.onnx from https://huggingface.co/hacksider/deep-live-cam/resolve/main/GFPGANv1.4.onnx
+- InsightFace buffalo_l model (auto-downloaded by insightface library)
+
+LICENSE NOTE: InsightFace inswapper model is non-commercial research only. This is fine for open source / self-hosted. For paid cloud version (Phase 3), we need to address this.
+
+## Current Task: PHASE 1B -- Voice Clone + Lip Sync
 
 ### What to build (in order):
 
-**Step 1: faceswap.py** (`phantm/engine/pipeline/faceswap.py`)
-- Wrap Deep-Live-Cam's face swap functionality
-- Accept: reference photo path + source video frame (numpy array)
-- Return: face-swapped frame (numpy array)
-- Must handle: no face detected in source (return original frame)
-- Must handle: multiple faces in source (swap largest face only)
-- Test: run on a sample image, verify face is swapped
+**Step 1: tts.py** (`phantm/engine/pipeline/tts.py`) -- CosyVoice 2
+- Clone CosyVoice repo: git clone https://github.com/FunAudioLLM/CosyVoice.git
+- Install: cd CosyVoice && pip install -r requirements.txt
+- Load pre-trained model (CosyVoice2-0.5B recommended for speed)
+- Accept: text string + reference voice audio path (10-30 seconds WAV)
+- Return: synthesized audio as numpy array in the user's cloned voice
+- Must support streaming: yield audio chunks as they are generated
+- Test: input "Hello, I am your AI twin" -> output WAV file in cloned voice
 
-**Step 2: virtual_cam.py** (`phantm/engine/pipeline/virtual_cam.py`)
-- Initialize pyvirtualcam with 1280x720 @ 30fps
-- Consume frames from an asyncio queue
-- Push each frame to the virtual camera device
-- Fallback: if pyvirtualcam not available, save frames to video file instead
-- Test: open Zoom, verify "LiveSelf Cam" appears as camera option
+**Step 2: lipsync.py** (`phantm/engine/pipeline/lipsync.py`) -- MuseTalk 1.5
+- Clone MuseTalk repo: git clone https://github.com/TMElyralab/MuseTalk.git
+- Install: follow their setup instructions
+- Accept: audio waveform + face reference frame
+- Return: video frames with lips moving to match the audio
+- Target: 30fps output
+- Test: input audio + face photo -> output video with moving lips
 
 **Step 3: Integration test**
-- Wire faceswap output -> virtual_cam input
-- Run with webcam as source
-- Verify face-swapped video appears in Zoom
+- Wire: tts output audio -> lipsync input
+- Wire: lipsync output frames -> virtual_cam
+- Test: type text -> hear it in your voice -> see lips move on avatar
 
 ### After Phase 1A, your next tasks:
 - Phase 1B: tts.py (CosyVoice 2) + lipsync.py (MuseTalk)
