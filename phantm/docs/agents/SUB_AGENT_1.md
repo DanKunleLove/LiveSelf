@@ -9,7 +9,7 @@ Open-source platform for live AI digital twins on video calls. Users upload phot
 ## Your Domain
 Everything inside `phantm/engine/`. You build and test the AI pipeline modules.
 
-## The Pipeline (what you are building)
+## The Pipeline (what you built)
 ```
 Microphone -> faster-whisper (ASR) -> ChromaDB (RAG) -> Ollama/Claude (LLM)
     -> CosyVoice 2 (TTS) -> MuseTalk (lip sync) -> pyvirtualcam (virtual camera)
@@ -35,35 +35,49 @@ faceswap.py and virtual_cam.py are built. Phase 0 Colab test produced output.mp4
 
 LICENSE NOTE: InsightFace inswapper model is non-commercial research only. This is fine for open source / self-hosted. For paid cloud version (Phase 3), we need to address this.
 
-## Current Task: PHASE 1B -- Voice Clone + Lip Sync
+## COMPLETED: Phase 1B -- Voice Clone + Lip Sync
 
-### What to build (in order):
+tts.py (CosyVoice 2) and lipsync.py (MuseTalk 1.5) are built:
+- VoiceCloner: batch and streaming synthesis, 16kHz reference audio resampling
+- LipSyncer: batch and streaming frame generation at 30fps target
+- Test scripts: test_tts.py, test_lipsync.py
 
-**Step 1: tts.py** (`phantm/engine/pipeline/tts.py`) -- CosyVoice 2
-- Clone CosyVoice repo: git clone https://github.com/FunAudioLLM/CosyVoice.git
-- Install: cd CosyVoice && pip install -r requirements.txt
-- Load pre-trained model (CosyVoice2-0.5B recommended for speed)
-- Accept: text string + reference voice audio path (10-30 seconds WAV)
-- Return: synthesized audio as numpy array in the user's cloned voice
-- Must support streaming: yield audio chunks as they are generated
-- Test: input "Hello, I am your AI twin" -> output WAV file in cloned voice
+## COMPLETED: Phase 1C -- Brain Layer
 
-**Step 2: lipsync.py** (`phantm/engine/pipeline/lipsync.py`) -- MuseTalk 1.5
-- Clone MuseTalk repo: git clone https://github.com/TMElyralab/MuseTalk.git
-- Install: follow their setup instructions
-- Accept: audio waveform + face reference frame
-- Return: video frames with lips moving to match the audio
-- Target: 30fps output
-- Test: input audio + face photo -> output video with moving lips
+All brain modules are built and wired:
+- asr.py: SpeechRecognizer with faster-whisper + energy-based VAD + utterance buffering
+- retriever.py: KnowledgeRetriever with ChromaDB per-persona collections
+- indexer.py: KnowledgeIndexer for Q&A pairs and text chunk indexing
+- llm.py: LLMBrain with Ollama (free) and Claude (paid), streaming overlap trick
+- orchestrator.py: PipelineOrchestrator with 5 async workers and queue-based pipeline
+- main.py: Engine FastAPI server with session start/stop + audio WebSocket
 
-**Step 3: Integration test**
-- Wire: tts output audio -> lipsync input
-- Wire: lipsync output frames -> virtual_cam
-- Test: type text -> hear it in your voice -> see lips move on avatar
+## Current Task: COLAB TESTING + INTEGRATION
 
-### After Phase 1A, your next tasks:
-- Phase 1B: tts.py (CosyVoice 2) + lipsync.py (MuseTalk)
-- Phase 1C: asr.py (faster-whisper) + llm.py (Ollama) + retriever.py (ChromaDB) + orchestrator.py
+### Priority 1: Test on Colab
+Use the Colab notebooks in scripts/:
+- colab_phase1b.py -- Test voice cloning + lip sync
+- colab_phase1c.py -- Test ASR + RAG + LLM brain chain
+
+Run through both notebooks on a T4 GPU and verify:
+- Voice cloning produces audio in the reference voice
+- Lip sync generates moving-lips video frames
+- ASR transcribes speech correctly
+- RAG retrieves relevant knowledge chunks
+- LLM generates persona-appropriate responses
+- Full brain chain works end-to-end
+
+### Priority 2: Integration Testing
+Wire and test the complete pipeline:
+1. Face swap + lip sync compositing (lipsync output overlaid on faceswap output)
+2. End-to-end: audio in -> text -> knowledge -> response -> voice -> video out
+3. Measure actual latency on GPU and compare against targets
+
+### Priority 3: Performance Optimization
+- Profile each module's latency on T4 GPU
+- Identify bottlenecks
+- Optimize: smaller whisper model if needed, batch lip sync frames, etc.
+- Target: under 500ms perceived latency with streaming overlap
 
 ## Rules
 1. Every function gets a docstring explaining what it does
@@ -82,20 +96,20 @@ All engine code runs on GPU. For local testing without GPU:
 ## Files You Own
 ```
 phantm/engine/
-  main.py              # Engine FastAPI server
+  main.py              # DONE - Engine FastAPI server with WebSocket
   pipeline/
     __init__.py
-    faceswap.py        # YOUR CURRENT TASK
-    virtual_cam.py     # YOUR NEXT TASK
-    tts.py             # Phase 1B
-    lipsync.py         # Phase 1B
-    asr.py             # Phase 1C
-    llm.py             # Phase 1C
-    orchestrator.py    # Phase 1C
+    faceswap.py        # DONE - Phase 1A
+    virtual_cam.py     # DONE - Phase 1A
+    tts.py             # DONE - Phase 1B
+    lipsync.py         # DONE - Phase 1B
+    asr.py             # DONE - Phase 1C
+    llm.py             # DONE - Phase 1C
+    orchestrator.py    # DONE - Phase 1C
   knowledge/
     __init__.py
-    indexer.py         # Phase 1C
-    retriever.py       # Phase 1C
+    indexer.py         # DONE - Phase 1C
+    retriever.py       # DONE - Phase 1C
   requirements.txt
 ```
 

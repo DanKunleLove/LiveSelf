@@ -9,59 +9,73 @@ Open-source platform for live AI digital twins on video calls. Users upload phot
 ## Your Domain
 Everything inside `phantm/frontend/` and `phantm/backend/`.
 
-## Current Task: PHASE 2 PREP -- Backend MVP + Frontend Scaffold
+## COMPLETED: Backend MVP (Steps 1-2)
 
-While Sub Agent 1 builds the AI pipeline (Phase 1), you prepare the web layer so it is ready to connect when the pipeline works.
+Backend routers, models, config, database, and middleware are built:
+- Auth router: register, login, me (Supabase auth)
+- Personas router: CRUD + photo/voice upload endpoints
+- Sessions router: create, list, end sessions
+- Pydantic models: users, personas, sessions, knowledge, base enums
+- Config: pydantic-settings with all env vars
+- Database: Supabase client + initial migration SQL
+- Middleware: JWT auth middleware
+
+NOTE: Persona photo/voice uploads use placeholder URLs -- R2 storage not wired yet. Wire this when you have time but it is not blocking.
+
+## Current Task: PHASE 2 -- Frontend Scaffold + Dashboard
+
+Now that the backend is ready, build the frontend so users can interact with LiveSelf.
 
 ### What to build (in order):
 
-**Step 1: Backend -- Supabase Database Setup**
-- Create SQL migration files for these tables (see engineering bible Section 04):
-  - users (id, email, display_name, plan, minutes_used, minutes_limit, created_at)
-  - personas (id, user_id, name, photo_url, voice_sample_url, system_prompt, is_active, created_at)
-  - knowledge_bases (id, user_id, name, chroma_collection_id, document_count, created_at)
-  - sessions (id, user_id, persona_id, status, started_at, ended_at, duration_seconds, exchange_count)
-- Write Pydantic models in backend/app/models/ for request/response shapes
+**Step 1: Initialize Next.js 14 project**
+```bash
+cd phantm/frontend
+npx create-next-app@14 . --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
+```
+- Install Shadcn/ui: npx shadcn@latest init
+- Install extra deps: npm install zustand @tanstack/react-query lucide-react
+- Install fonts: Sora (UI) and JetBrains Mono (data/code)
+- Create the base layout with the Ghost Glass dark theme
 
-**Step 2: Backend -- Core API Endpoints (12 MVP routes)**
-Build these routers in backend/app/routers/:
+**Step 2: API client + auth**
+- Create `src/lib/api.ts` -- typed fetch wrapper for backend calls
+- Create `src/lib/auth.ts` -- login, register, logout, getUser functions
+- Store JWT in httpOnly cookie (NOT localStorage)
+- Create auth context/provider with Zustand
 
-Auth (auth.py):
-- POST /api/auth/register
-- POST /api/auth/login
-- GET /api/auth/me
-
-Personas (personas.py):
-- GET /api/personas (list user's personas)
-- POST /api/personas (create persona)
-- GET /api/personas/:id
-- POST /api/personas/:id/photo (upload face photo)
-- POST /api/personas/:id/voice (upload voice sample)
-
-Sessions (sessions.py):
-- POST /api/sessions (create session -> returns session_id)
-- GET /api/sessions (list past sessions)
-- PUT /api/sessions/:id/end (end active session)
-
-Health:
-- GET /api/health (already exists)
-
-**Step 3: Frontend -- Next.js Scaffold**
-- Initialize Next.js 14 with App Router, TypeScript, Tailwind
-- Install Shadcn/ui
-- Create route groups: (marketing) and (app)
-- Build landing page at / with:
-  - Hero: "Show up without showing up." + 2 CTAs
-  - How it works: 3 steps
-  - Tech stack section
+**Step 3: Marketing landing page**
+Route group: `src/app/(marketing)/`
+- Build landing page at `/` with:
+  - Hero section: "Show up without showing up." headline + 2 CTAs (Get Started, Watch Demo)
+  - "How it works" section: 3 steps (Upload Photo, Record Voice, Go Live)
+  - "Built with" tech stack section (logos/names of the open-source tools)
   - Footer with GitHub link
-- Build auth pages: /auth/login, /auth/register
-- Build app layout with sidebar navigation
+- NO emojis, NO stock photos, NO decorative icons
+- Use the Ghost Glass dark design system (see below)
 
-**Step 4: Frontend -- Dashboard Pages**
-- /app/dashboard (stats + persona cards + recent sessions)
-- /app/setup (3-step wizard: upload photo, record voice, add knowledge)
-- /app/sessions/live/[id] (live session screen with status HUD)
+**Step 4: Auth pages**
+- `/auth/login` -- email + password form
+- `/auth/register` -- email + password + display name form
+- Both should redirect to `/app/dashboard` on success
+- Clean, minimal design with Ghost Glass styling
+
+**Step 5: App dashboard layout + pages**
+Route group: `src/app/(app)/`
+- App layout with sidebar navigation (Dashboard, Setup, Sessions)
+- `/app/dashboard` -- persona cards + session stats + "Go Live" button
+- `/app/setup` -- 3-step wizard:
+  - Step 1: Upload face photo (drag & drop)
+  - Step 2: Record voice sample (MediaRecorder API, 10-30s)
+  - Step 3: Add knowledge (Q&A pairs form)
+- `/app/sessions` -- list of past sessions with duration + exchange count
+
+**Step 6: Live session page**
+- `/app/sessions/live/[id]` -- the live session screen
+- Status HUD showing: connection status, latency, frame rate
+- Avatar video feed area (placeholder for now -- virtual cam output)
+- "End Session" button
+- This page will eventually connect to the engine WebSocket
 
 ## Tech Stack
 - Frontend: Next.js 14, TypeScript, Tailwind CSS, Shadcn/ui, Zustand, TanStack Query
@@ -76,6 +90,7 @@ Health:
 - AI Purple: #A855F7 -- AI features only
 - Font: Sora for UI, JetBrains Mono for code/data
 - Spacing: 8px base grid
+- Cards: glass-morphism effect (backdrop-blur, semi-transparent backgrounds)
 - All interactive elements need 7 states: default, hover, focus, active, disabled, loading, error
 - NO emojis, NO stock photos, NO decorative icons
 
@@ -90,15 +105,16 @@ Health:
 
 ## Files You Own
 ```
-phantm/frontend/        # Everything here
-phantm/backend/         # Everything here
+phantm/frontend/        # Everything here (you create this)
+phantm/backend/         # Everything here (Steps 1-2 done)
   app/
-    main.py             # Already exists
-    routers/            # You build these
-    models/             # You build these
-    services/           # You build these
-    middleware/          # You build these
-    database/           # You build these
+    main.py             # EXISTS - FastAPI app
+    config.py           # EXISTS - pydantic-settings
+    routers/            # EXISTS - auth, personas, sessions
+    models/             # EXISTS - base, users, personas, sessions, knowledge
+    services/           # EXISTS (empty)
+    middleware/          # EXISTS - auth middleware
+    database/           # EXISTS - supabase client + migration
 ```
 
 ## Reference
