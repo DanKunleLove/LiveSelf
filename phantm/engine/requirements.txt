@@ -1,0 +1,49 @@
+# LiveSelf Engine — AI Pipeline Requirements
+# IMPORTANT: Requires Python 3.10 or 3.11 (NOT 3.13)
+# These run on GPU (Google Colab or RunPod)
+
+# Web framework for engine API
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+websockets==14.1
+
+# ASR — Speech to Text
+faster-whisper==1.1.0
+
+# Voice Cloning — CosyVoice 2
+# NOTE: CosyVoice is installed via git clone, not pip
+# See scripts/setup_engine.sh
+
+# Lip Sync — MuseTalk
+# NOTE: MuseTalk is installed via git clone, not pip
+# See scripts/setup_engine.sh
+
+# Face Swap — Deep-Live-Cam
+# NOTE: Deep-Live-Cam is installed via git clone, not pip
+# See scripts/setup_engine.sh
+
+# Knowledge Base
+chromadb==0.6.3
+sentence-transformers==3.3.1
+
+# LLM Client
+ollama==0.4.7
+anthropic==0.43.0
+
+# Virtual Camera
+pyvirtualcam==0.12.0
+
+# Image/Video Processing
+opencv-python-headless==4.10.0.84
+numpy>=1.26.0,<2.0
+Pillow>=10.0
+
+# Audio Processing
+sounddevice==0.5.1
+soundfile==0.13.0
+
+# Async utilities
+aiofiles==24.1.0
+
+# Monitoring
+psutil==6.1.1
