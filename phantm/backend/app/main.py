@@ -42,9 +42,13 @@ async def health():
     return {"status": "ok", "version": "0.1.0"}
 
 
-# Routers will be added as we build each feature:
-# from app.routers import auth, personas, knowledge, sessions
-# app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
-# app.include_router(personas.router, prefix="/api/personas", tags=["Personas"])
+# -- Routers --
+from app.routers import auth, personas, sessions
+
+app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+app.include_router(personas.router, prefix="/api/personas", tags=["Personas"])
+app.include_router(sessions.router, prefix="/api/sessions", tags=["Sessions"])
+
+# Knowledge router will be added when knowledge base CRUD is built
+# from app.routers import knowledge
 # app.include_router(knowledge.router, prefix="/api/knowledge", tags=["Knowledge"])
-# app.include_router(sessions.router, prefix="/api/sessions", tags=["Sessions"])
