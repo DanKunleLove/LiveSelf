@@ -22,9 +22,14 @@ Backend routers, models, config, database, and middleware are built:
 
 NOTE: Persona photo/voice uploads use placeholder URLs -- R2 storage not wired yet. Wire this when you have time but it is not blocking.
 
+## Engine Status (for context)
+- Phase 1A (face swap): WORKING and tested on Colab
+- Phase 1C brain (ASR + RAG + LLM): WORKING on Colab -- Llama 3 streams responses
+- Phase 1B voice clone: code done, one dependency fix applied (openai-whisper from GitHub source), test pending
+
 ## Current Task: PHASE 2 -- Frontend Scaffold + Dashboard
 
-Now that the backend is ready, build the frontend so users can interact with LiveSelf.
+The AI engine works. Now build the frontend so users can interact with LiveSelf.
 
 ### What to build (in order):
 
@@ -37,6 +42,7 @@ npx create-next-app@14 . --typescript --tailwind --eslint --app --src-dir --impo
 - Install extra deps: npm install zustand @tanstack/react-query lucide-react
 - Install fonts: Sora (UI) and JetBrains Mono (data/code)
 - Create the base layout with the Ghost Glass dark theme
+- Verify it runs: npm run dev
 
 **Step 2: API client + auth**
 - Create `src/lib/api.ts` -- typed fetch wrapper for backend calls

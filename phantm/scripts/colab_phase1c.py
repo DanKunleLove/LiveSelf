@@ -28,7 +28,12 @@ if torch.cuda.is_available():
     print(f"VRAM: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB")
 
 # Install brain layer dependencies
-!pip install faster-whisper chromadb ollama soundfile numpy
+# nest_asyncio is required -- Colab already has a running event loop,
+# so asyncio.run() throws RuntimeError without this patch.
+!pip install faster-whisper chromadb ollama soundfile numpy nest_asyncio
+
+# Install system dep for Ollama
+!apt-get update -y -q && apt-get install -y -q zstd
 
 # Install Ollama (local LLM server)
 !curl -fsSL https://ollama.com/install.sh | sh
@@ -80,9 +85,12 @@ print("LiveSelf repo ready.")
 import sys
 import time
 import numpy as np
-sys.path.insert(0, "engine")
+import nest_asyncio
+nest_asyncio.apply()
 
-from pipeline.asr import SpeechRecognizer, SAMPLE_RATE
+sys.path.insert(0, "/content/LiveSelf/phantm")
+
+from engine.pipeline.asr import SpeechRecognizer, SAMPLE_RATE
 
 # Load faster-whisper (medium model for good accuracy)
 print("Loading faster-whisper model...")
@@ -149,10 +157,10 @@ print("\\nASR module: WORKING")
 """
 import sys
 import time
-sys.path.insert(0, "engine")
+sys.path.insert(0, "/content/LiveSelf/phantm")
 
-from knowledge.retriever import KnowledgeRetriever
-from knowledge.indexer import KnowledgeIndexer
+from engine.knowledge.retriever import KnowledgeRetriever
+from engine.knowledge.indexer import KnowledgeIndexer
 
 # Initialize ChromaDB
 print("Loading ChromaDB...")
@@ -205,9 +213,15 @@ print("\\nRAG module: WORKING")
 import asyncio
 import sys
 import time
-sys.path.insert(0, "engine")
+import nest_asyncio
 
-from pipeline.llm import LLMBrain
+# Apply nest_asyncio FIRST -- Colab's event loop blocks asyncio.run() without this.
+# This was the fix discovered during Phase 1C testing.
+nest_asyncio.apply()
+
+sys.path.insert(0, "/content/LiveSelf/phantm")
+
+from engine.pipeline.llm import LLMBrain
 
 # Initialize LLM with Ollama
 print("Connecting to Ollama...")
@@ -269,11 +283,14 @@ import asyncio
 import sys
 import time
 import numpy as np
-sys.path.insert(0, "engine")
+import nest_asyncio
+nest_asyncio.apply()
 
-from pipeline.asr import SpeechRecognizer, SAMPLE_RATE
-from knowledge.retriever import KnowledgeRetriever
-from pipeline.llm import LLMBrain
+sys.path.insert(0, "/content/LiveSelf/phantm")
+
+from engine.pipeline.asr import SpeechRecognizer, SAMPLE_RATE
+from engine.knowledge.retriever import KnowledgeRetriever
+from engine.pipeline.llm import LLMBrain
 
 print("=== Full Brain Chain Test ===")
 print("Pipeline: Audio -> ASR -> RAG -> LLM -> Text Response\\n")
@@ -345,11 +362,14 @@ import time
 import numpy as np
 import soundfile as sf
 import cv2
-sys.path.insert(0, "engine")
+import nest_asyncio
+nest_asyncio.apply()
+
+sys.path.insert(0, "/content/LiveSelf/phantm")
 
 # Check if TTS is available
 try:
-    from pipeline.tts import VoiceCloner, OUTPUT_SAMPLE_RATE
+    from engine.pipeline.tts import VoiceCloner, OUTPUT_SAMPLE_RATE
     TTS_AVAILABLE = True
 except ImportError:
     TTS_AVAILABLE = False
@@ -394,7 +414,7 @@ if TTS_AVAILABLE and 'cloner' in dir() and cloner.is_ready:
 
     # Lip sync (if available)
     try:
-        from pipeline.lipsync import LipSyncer
+        from engine.pipeline.lipsync import LipSyncer
         if 'syncer' in dir() and syncer.is_ready:
             print("\\n[LipSync] Generating frames...")
             start = time.perf_counter()
